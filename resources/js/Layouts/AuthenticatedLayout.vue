@@ -6,10 +6,14 @@ import DropdownLink from "@/Components/DropdownLink.vue";
 import NavLink from "@/Components/NavLink.vue";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
 import { Link } from "@inertiajs/vue3";
-
+defineProps({
+    countCartGlobal: {
+        type: Number,
+    },
+});
 //Defino los emits
 const emit = defineEmits(["open-modal-cart"]);
-
+const countProduct = ref(0);
 // crea una funcion para pasar el emit al componente ProductList, para poder abrir el modal dando click al carrito
 const openModalCart = () => {
     emit("open-modal-cart");
@@ -71,7 +75,7 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     <span
                                         class="text-white mt-0 text-xs text-center"
-                                        >1</span
+                                        >{{ countCartGlobal }}</span
                                     >
                                 </div>
                                 <i

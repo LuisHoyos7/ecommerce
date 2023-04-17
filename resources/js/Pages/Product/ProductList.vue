@@ -1,4 +1,5 @@
 <script setup>
+import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import { nextTick, ref } from "vue";
@@ -8,36 +9,86 @@ import InputLabel from "@/Components/InputLabel.vue";
 //----------------//
 //objetos del back
 //_______________//
-defineProps({
+const props = defineProps({
     product: {
         type: Object,
     },
+    countCartGlobal: {
+        type: Number,
+    },
 });
+const formatCurrency = (value) => {
+    if (value) {
+        const formatter = new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+        });
+        return formatter.format(value);
+    } else {
+        return "";
+    }
+};
+const newProducts = ref(
+    props.product.map((product) => ({ ...product, add: false }))
+);
 
-//funciones
-function showModalCart() {
-    displayModalCart.value = ref(true);
-}
+console.log("productos", newProducts);
+// vatiables
+const countCartGlobal = ref(0);
 const productCart = ref([]);
 const count = ref(1);
 const discount = ref(0);
+let displayModalCart = ref(false);
+//funciones
+// al dar click se muestra el carrito de compras
+function showModalCart() {
+    displayModalCart.value = ref(true);
+}
+
+const sumTotalGlobal = () => {
+    return +productCart.value.reduce((acumulador, productCart) => {
+        return acumulador + productCart.price * productCart.amount;
+    }, 0);
+};
+
+const sendPrice = async () => {
+    const datos = {};
+    const url = "/product/send-mail"; // especifica la URL del controlador de Laravel
+
+    try {
+        const response = await axios.post(url, datos);
+        console.log(response.data); // haz algo con la respuesta del controlador, si lo necesitas
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+const emit = defineEmits(["count-cart-global"]);
 
 function increment(id) {
     // Buscamos el objeto con el id buscado y le sumamos 1 a la propiedad 'amount'
-    const objetoEncontrado = productCart.value.find(
-        (objeto) => objeto.id === id
-    );
-    objetoEncontrado.amount += 1;
+    const object = productCart.value.find((object) => object.id === id);
+    object.amount += 1;
 
     // Actualizamos el valor de 'productCart' para reflejar el cambio
-    const indice = productCart.value.findIndex((objeto) => objeto.id === id);
-    productCart.value.splice(indice, 1, objetoEncontrado);
+    const indice = productCart.value.findIndex((object) => object.id === id);
+    productCart.value.splice(indice, 1, object);
+
+    countProductGlobalMore();
 }
 
 function decrement(id) {
-    if (count.value > 0) {
-        count.value--;
+    // Buscamos el objeto con el id buscado y le sumamos 1 a la propiedad 'amount'
+    const object = productCart.value.find((object) => object.id === id);
+    if (object.amount > 0) {
+        object.amount -= 1;
     }
+
+    // Actualizamos el valor de 'productCart' para reflejar el cambio
+    const indice = productCart.value.findIndex((object) => object.id === id);
+    productCart.value.splice(indice, 1, object);
+
+    countProductGlobalLess();
 }
 function addCart(id, url_file, name, price) {
     productCart.value.push({
@@ -47,10 +98,38 @@ function addCart(id, url_file, name, price) {
         price: price,
         amount: 1,
     });
+
+    stateCart(id);
+    countProductGlobalMore();
+}
+
+function countProductGlobalMore() {
+    countCartGlobal.value += 1;
+}
+
+function countProductGlobalLess() {
+    if (countCartGlobal.value > 0) {
+        countCartGlobal.value -= 1;
+    }
+}
+
+function stateCart(id) {
+    const product = newProducts.value.find((p) => p.id === id);
+    product.add = true;
     console.log(productCart.value);
 }
-//data
-let displayModalCart = ref(false);
+
+function deleteProduct(id) {
+    const index = productCart.value.findIndex((p) => p.id === id);
+    const productDelete = productCart.value.find((p) => p.id === id);
+    console.log("index", index);
+    if (index !== -1) {
+        productCart.value.splice(index, 1);
+    }
+    if (countCartGlobal.value > 0) {
+        countCartGlobal.value -= productDelete.amount;
+    }
+}
 </script>
 
 //styles
@@ -90,9 +169,16 @@ hr {
 
 <template>
     <!--Recibo el emit desde el nav para poder abrir el modal de las compras (el detalle del carrito de compras)-->
-    <AuthenticatedLayout @open-modal-cart="showModalCart">
+    <AuthenticatedLayout
+        @open-modal-cart="showModalCart"
+        :countCartGlobal="countCartGlobal"
+    >
         <div class="row">
-            <div class="pt-6 pb-0 col-6" v-for="item in product" :key="item.id">
+            <div
+                class="pt-6 pb-0 col-6"
+                v-for="item in newProducts"
+                :key="item.id"
+            >
                 <div class="">
                     <div
                         class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
@@ -111,8 +197,10 @@ hr {
                                 }}</span>
                                 <hr />
                                 <p class="font-mono mb-0">PRECIO</p>
-                                <span class="font-mono">{{ item.price }}</span>
-                                <span class="ml-16">
+                                <span class="font-mono">{{
+                                    formatCurrency(item.price)
+                                }}</span>
+                                <span class="ml-16" v-if="item.add === false">
                                     <PrimaryButton
                                         @click="
                                             addCart(
@@ -126,6 +214,7 @@ hr {
                                         Añadir al carrito
                                     </PrimaryButton>
                                 </span>
+                                <span v-else> añadido al carrito </span>
                             </div>
                         </div>
                     </div>
@@ -157,7 +246,11 @@ hr {
                             field="name"
                             header="Descripción del producto"
                         ></Column>
-                        <Column field="price" header="Precio"></Column>
+                        <Column field="price" header="Precio">
+                            <template #body="slotProps">
+                                {{ formatCurrency(slotProps.data.price) }}
+                            </template>
+                        </Column>
                         <Column field="amount" header="Cantidad">
                             <template #body="slotProps">
                                 <div class="counter">
@@ -177,12 +270,21 @@ hr {
                         </Column>
                         <Column field="total" header="Total">
                             <template #body="slotProps">
-                                {{ slotProps.data.price * count }}
+                                {{
+                                    formatCurrency(
+                                        slotProps.data.price *
+                                            slotProps.data.amount
+                                    )
+                                }}
                             </template>
                         </Column>
-                        <Column field="" header="Eliminar">
+                        <Column field="" header="Acciones">
                             <template #body="slotProps">
-                                <DangerButton>Eliminar</DangerButton>
+                                <i
+                                    @click="deleteProduct(slotProps.data.id)"
+                                    class="pi pi-trash"
+                                    style="color: red"
+                                ></i>
                             </template>
                         </Column>
                     </DataTable>
@@ -191,16 +293,16 @@ hr {
                     <div class="flex justify-end items-end">
                         <div>
                             <!-- <InputLabel
-                                for="password"
-                                value="Descuento"
-                                class="text-right mb-1 mt-3"
-                                placeholder="Descuento"
-                            /> -->
+                                    for="password"
+                                    value="Descuento"
+                                    class="text-right mb-1 mt-3"
+                                    placeholder="Descuento"
+                                /> -->
                             <input
-                                id="discont"
-                                type="discont"
+                                id="discount"
+                                type="discount"
                                 class="form-control text-right mt-4"
-                                v-model="discont"
+                                v-model="discount"
                                 required
                                 placeholder="Descuento"
                                 autocomplete="current-password"
@@ -208,21 +310,36 @@ hr {
                             />
                         </div>
                     </div>
+                    <div class="flex flex-col items-end mt-4">
+                        <div class="flex justify-between w-full mb-2">
+                            <span><b>Subtotal:</b></span>
+                            <span>{{ formatCurrency(sumTotalGlobal()) }}</span>
+                        </div>
+                        <div class="flex justify-between w-full mb-2">
+                            <span><b>Descuento:</b></span>
+                            <span
+                                >{{
+                                    formatCurrency(discount)
+                                        ? formatCurrency(discount)
+                                        : "$ " + 0
+                                }}
+                            </span>
+                        </div>
+                        <!-- <div class="flex justify-between w-full mb-2">
+                            <span><b>Iva:</b></span>
+                            <span>$50000</span>
+                        </div> -->
+                        <div class="flex justify-between w-full mb-2">
+                            <span><b>Total:</b></span>
+                            <span>{{
+                                formatCurrency(sumTotalGlobal() - discount)
+                            }}</span>
+                        </div>
+                    </div>
+
                     <div class="flex justify-end items-end mt-4">
-                        <span><b>Subtotal: </b></span><span>$50000</span>
-                    </div>
-                    <div class="flex justify-end items-end mt-2">
-                        <span><b>Descuento: </b></span><span>$50000</span>
-                    </div>
-                    <div class="flex justify-end items-end mt-2">
-                        <span><b>Iva: </b></span><span>$50000</span>
-                    </div>
-                    <div class="flex justify-end items-end mt-2">
-                        <span><b>Total: </b></span><span>$50000</span>
-                    </div>
-                    <div class="flex justify-end items-end mt-4">
-                        <PrimaryButton
-                            >Enviar cotización (por definir)</PrimaryButton
+                        <PrimaryButton @click="sendPrice"
+                            >Enviar cotización</PrimaryButton
                         >
                     </div>
                 </form>

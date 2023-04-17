@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Inertia\Inertia;
+use App\Mail\SendMailPrice;
 use Inertia\Response;
+use Illuminate\Support\Facades\Mail;
 
 class ProductController extends Controller
 {
@@ -17,6 +19,14 @@ class ProductController extends Controller
         return Inertia::render('Product/ProductList', [
             'product' => Product::all()
         ]);
+    }
+
+    public function send(Request $request)
+    {
+        $data = $request->all(); // obtiene todos los datos enviados en la solicitud
+        return dd($data);
+        die();
+        // Mail::to("luiz-fer@outlook.es")->send(new SendMailPrice());
     }
 
     /**
