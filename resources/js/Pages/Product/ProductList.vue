@@ -6,6 +6,7 @@ import { nextTick, ref } from "vue";
 import TextInput from "@/Components/TextInput.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import InputLabel from "@/Components/InputLabel.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
 //----------------//
 //objetos del back
 //_______________//
@@ -17,6 +18,13 @@ const props = defineProps({
         type: Number,
     },
 });
+const nextPage = () => {
+    Inertia.get(props.product.next_page_url);
+};
+
+const prevPage = () => {
+    Inertia.get(props.product.prev_page_url);
+};
 const formatCurrency = (value) => {
     if (value) {
         const formatter = new Intl.NumberFormat("es-CO", {
@@ -29,7 +37,7 @@ const formatCurrency = (value) => {
     }
 };
 const newProducts = ref(
-    props.product.map((product) => ({ ...product, add: false }))
+    props.product.data.map((product) => ({ ...product, add: false }))
 );
 
 console.log("productos", newProducts);
@@ -136,8 +144,14 @@ function deleteProduct(id) {
 <style lang="css" scoped>
 hr {
     background-color: black;
-    color: black;
-    height: 2px;
+    height: 1px;
+}
+
+.pagination {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .counter {
     display: flex;
@@ -175,7 +189,7 @@ hr {
     >
         <div class="row">
             <div
-                class="pt-6 pb-0 col-6"
+                class="pt-3 pb-0 col-6"
                 v-for="item in newProducts"
                 :key="item.id"
             >
@@ -188,19 +202,21 @@ hr {
                                 <img :src="item.url_file" class="w-96" />
                             </div>
                             <div class="col-md-6">
-                                <p class="font-mono font-bold pt-4 mb-0">
+                                <p class="font-sans font-bold pt-4 mb-0">
                                     {{ item.name }}
                                 </p>
-                                <span class="font-mono mb-0">Codigo : </span>
-                                <span class="font-mono mb-0">{{
+                                <span class="font-sans mb-0"
+                                    ><b>Codigo : </b>
+                                </span>
+                                <span class="font-sans mb-0">{{
                                     item.code
                                 }}</span>
                                 <hr />
-                                <p class="font-mono mb-0">PRECIO</p>
-                                <span class="font-mono">{{
+                                <p class="font-arial mb-0"><b>Precio</b></p>
+                                <span class="font-sans">{{
                                     formatCurrency(item.price)
                                 }}</span>
-                                <span class="ml-16" v-if="item.add === false">
+                                <span class="ml-12" v-if="item.add === false">
                                     <PrimaryButton
                                         @click="
                                             addCart(
@@ -214,11 +230,35 @@ hr {
                                         Añadir al carrito
                                     </PrimaryButton>
                                 </span>
-                                <span v-else> añadido al carrito </span>
+                                <span v-else class="ml-12">
+                                    <SecondaryButton>
+                                        Agregado
+                                    </SecondaryButton>
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="pagination mt-4">
+                <button
+                    class="mr-4 bg-blue-900 pr-3 pt-1 pb-1 pl-3 text-white rounded-md"
+                    :disabled="!product.prev_page_url"
+                    @click="prevPage"
+                >
+                    Anterior
+                </button>
+                <span
+                    >Página {{ product.current_page }} de
+                    {{ product.last_page }}</span
+                >
+                <button
+                    class="ml-4 bg-blue-900 pr-3 pt-1 pb-1 pl-3 text-white rounded-md"
+                    :disabled="!product.next_page_url"
+                    @click="nextPage"
+                >
+                    Siguiente
+                </button>
             </div>
             <Dialog
                 v-model:visible="displayModalCart"

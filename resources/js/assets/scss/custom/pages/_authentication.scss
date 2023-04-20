@@ -1,45 +1,45 @@
-// 
+//
 // authentication.scss
 //
 
-.auth-body-bg{
+.auth-body-bg {
     background-color: $card-bg;
 }
 
-.authentication-bg{
-    background-image: url("../images/authentication-bg.jpg");
+.authentication-bg {
+    background-image: url("../images/2.jpg");
     height: 100vh;
     background-size: cover;
     background-position: center;
-    .bg-overlay{
+    .bg-overlay {
         background-color: #292626;
     }
 
     @media (max-width: 991px) {
-            display: none;
+        display: none;
     }
 }
 
-.authentication-page-content{
+.authentication-page-content {
     height: 100vh;
     display: flex;
 }
 
-.auth-form-group-custom{
+.auth-form-group-custom {
     position: relative;
-    .form-control{
+    .form-control {
         height: 60px;
         padding-top: 28px;
         padding-left: 60px;
     }
 
-    label{
+    label {
         position: absolute;
         top: 7px;
         left: 60px;
     }
 
-    .auti-custom-input-icon{
+    .auti-custom-input-icon {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
@@ -49,10 +49,6 @@
     }
 }
 
-
-
-
-
 // authentication home icon
 .home-btn {
     position: absolute;
@@ -60,4 +56,3 @@
     right: 25px;
     z-index: 9;
 }
-

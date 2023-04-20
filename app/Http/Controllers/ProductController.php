@@ -14,12 +14,23 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        // return Inertia::render('Product/ProductList', [
+        //     'product' => Product::all()
+        // ]);
+
+        $page = $request->query('page', 1);
+        $perPage = $request->query('perPage', 10);
+
+        $products = Product::orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
         return Inertia::render('Product/ProductList', [
-            'product' => Product::all()
+            'product' => $products,
         ]);
     }
+
 
     public function send(Request $request)
     {

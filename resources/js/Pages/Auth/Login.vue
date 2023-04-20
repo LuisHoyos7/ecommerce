@@ -38,7 +38,7 @@ const submit = () => {
     <link rel="stylesheet" href="." />
     <div>
         <div class="container-fluid p-0">
-            <div class="row no-gutters">
+            <div class="row no-gutters bg-white">
                 <div class="col-lg-4">
                     <div
                         class="authentication-page-content p-4 d-flex align-items-center min-vh-100"
@@ -51,8 +51,8 @@ const submit = () => {
                                             <div>
                                                 <a href="/" class="logo">
                                                     <img
-                                                        src="@/assets/images/logo-dark.png"
-                                                        height="20"
+                                                        src="/logo.jpg"
+                                                        height="10"
                                                         alt="logo"
                                                     />
                                                 </a>
